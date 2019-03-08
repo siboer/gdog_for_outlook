@@ -33,7 +33,6 @@ EMAIL_TIME_OUT = 60
 
 ##########################################
 
-clientid = hashlib.sha256('huangsibo lololo').hexdigest()
 
 #
 class systemInfo:
