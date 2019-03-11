@@ -2,4 +2,6 @@ language: python
 python:
  - "python2.7"
 install:
- -pip install pycrypto
+ - pip install pycrypto
+script:
+ - python  test.py
