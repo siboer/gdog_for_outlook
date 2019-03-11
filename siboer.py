@@ -129,6 +129,7 @@ class Siboer:
 				clientids.append(clientid)
 
 		print clientids
+		return clientids
 
 	def getclientInfo(self,clientid):
 
